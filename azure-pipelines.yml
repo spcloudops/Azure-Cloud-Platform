@@ -1,0 +1,130 @@
+trigger:
+  branches:
+    include:
+    - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  terraformVersion: '1.9.8'
+
+stages:
+- stage: Plan
+  displayName: Plan Dev infrastructure
+  jobs:
+  - job: TerraformPlan
+    displayName: Validate and save plan
+    steps:
+    - checkout: self
+
+    - bash: |
+        set -euo pipefail
+        version="$(terraformVersion)"
+        package="terraform_${version}_linux_amd64.zip"
+        base="https://releases.hashicorp.com/terraform/${version}"
+
+        curl -fsSLo "$package" "$base/$package"
+        curl -fsSLo SHA256SUMS "$base/terraform_${version}_SHA256SUMS"
+        grep " ${package}$" SHA256SUMS | sha256sum --check
+
+        mkdir -p "$(Agent.TempDirectory)/terraform-bin"
+        unzip -o "$package" -d "$(Agent.TempDirectory)/terraform-bin"
+        echo "##vso[task.prependpath]$(Agent.TempDirectory)/terraform-bin"
+      displayName: Install Terraform
+
+    - task: AzureCLI@2
+      displayName: Terraform init, validate and save plan
+      inputs:
+        azureSubscription: sc-rapid-platform-dev
+        scriptType: bash
+        scriptLocation: inlineScript
+        addSpnToEnvironment: true
+        workingDirectory: '$(Build.SourcesDirectory)/infra'
+        inlineScript: |
+          set -euo pipefail
+          export ARM_CLIENT_ID="$servicePrincipalId"
+          export ARM_TENANT_ID="$tenantId"
+          export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+          export ARM_OIDC_TOKEN="$idToken"
+          export ARM_USE_OIDC=true
+          export ARM_USE_AZUREAD=true
+          export ARM_USE_CLI=false
+          export TF_IN_AUTOMATION=true
+
+          terraform init -input=false -backend-config=dev.backend.hcl
+          terraform validate
+
+          mkdir -p "$(Build.ArtifactStagingDirectory)/terraform-plan"
+
+          terraform plan -input=false -lock-timeout=60s \
+            -out="$(Build.ArtifactStagingDirectory)/terraform-plan/dev.tfplan"
+
+          cp .terraform.lock.hcl \
+            "$(Build.ArtifactStagingDirectory)/terraform-plan/.terraform.lock.hcl"
+
+    - publish: '$(Build.ArtifactStagingDirectory)/terraform-plan'
+      artifact: terraform-plan
+      displayName: Publish plan and provider lock file
+
+- stage: DeployDev
+  displayName: Deploy Dev infrastructure
+  dependsOn: Plan
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: TerraformApply
+    displayName: Apply approved plan
+    environment: rapid-dev
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+
+          - download: current
+            artifact: terraform-plan
+            displayName: Download saved plan
+
+          - bash: |
+              set -euo pipefail
+              version="$(terraformVersion)"
+              package="terraform_${version}_linux_amd64.zip"
+              base="https://releases.hashicorp.com/terraform/${version}"
+
+              curl -fsSLo "$package" "$base/$package"
+              curl -fsSLo SHA256SUMS "$base/terraform_${version}_SHA256SUMS"
+              grep " ${package}$" SHA256SUMS | sha256sum --check
+
+              mkdir -p "$(Agent.TempDirectory)/terraform-bin"
+              unzip -o "$package" -d "$(Agent.TempDirectory)/terraform-bin"
+              echo "##vso[task.prependpath]$(Agent.TempDirectory)/terraform-bin"
+            displayName: Install Terraform
+
+          - task: AzureCLI@2
+            displayName: Terraform apply saved plan
+            inputs:
+              azureSubscription: sc-rapid-platform-dev
+              scriptType: bash
+              scriptLocation: inlineScript
+              addSpnToEnvironment: true
+              workingDirectory: '$(Build.SourcesDirectory)/infra'
+              inlineScript: |
+                set -euo pipefail
+                export ARM_CLIENT_ID="$servicePrincipalId"
+                export ARM_TENANT_ID="$tenantId"
+                export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+                export ARM_OIDC_TOKEN="$idToken"
+                export ARM_USE_OIDC=true
+                export ARM_USE_AZUREAD=true
+                export ARM_USE_CLI=false
+                export TF_IN_AUTOMATION=true
+
+                cp "$(Pipeline.Workspace)/terraform-plan/.terraform.lock.hcl" \
+                  .terraform.lock.hcl
+
+                terraform init -input=false \
+                  -backend-config=dev.backend.hcl \
+                  -lockfile=readonly
+
+                terraform apply -input=false -lock-timeout=60s \
+                  "$(Pipeline.Workspace)/terraform-plan/dev.tfplan"
