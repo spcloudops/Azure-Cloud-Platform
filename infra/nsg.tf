@@ -1,5 +1,5 @@
 locals {
-  admin_public_ip_cidr = "YOUR_PUBLIC_IPV4/32"
+  admin_public_ip_cidr = "175.33.209.204/32"
 }
 
 resource "azurerm_network_security_group" "hub_management" {
