@@ -36,6 +36,11 @@ locals {
       name = "AzureBastionSubnet"
       cidr = "10.0.1.0/26"
     }
+    hub_management = {
+        vnet = "hub"
+        name = "snet-hub-management"
+        cidr = "10.0.3.0/24"
+    }
     app_gateway = {
       vnet = "hub"
       name = "snet-appgw"
@@ -55,11 +60,6 @@ locals {
       vnet = "iaas"
       name = "snet-app"
       cidr = "10.2.1.0/24"
-    }
-    management = {
-      vnet = "iaas"
-      name = "snet-management"
-      cidr = "10.2.2.0/24"
     }
   }
 }
