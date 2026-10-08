@@ -14,7 +14,9 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  terraformVersion: '1.9.8'
+- group: vg-rapid-session-dev
+- name: terraformVersion
+  value: '1.9.8'
 
 stages:
 - stage: Plan
@@ -81,6 +83,7 @@ stages:
           cp .terraform.lock.hcl "$plan_dir/.terraform.lock.hcl"
       env:
         SESSION_OPERATION: ${{ parameters.operation }}
+        TF_VAR_management_admin_password: $(managementAdminPassword)
 
     - publish: '$(Build.ArtifactStagingDirectory)/session-plan'
       artifact: session-plan

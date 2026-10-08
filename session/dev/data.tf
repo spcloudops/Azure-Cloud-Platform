@@ -24,3 +24,8 @@ data "azurerm_subnet" "app_integration" {
   virtual_network_name = "vnet-rapid-paas-dev"
   resource_group_name  = data.azurerm_resource_group.platform.name
 }
+data "azurerm_subnet" "hub_management" {
+  name                 = "snet-hub-management"
+  virtual_network_name = "vnet-rapid-hub-dev"
+  resource_group_name  = data.azurerm_resource_group.platform.name
+}

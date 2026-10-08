@@ -1,6 +1,6 @@
 locals {
   routed_subnets = {
-    iaas_app        = data.azurerm_subnet.app.id
+    iaas_app         = data.azurerm_subnet.app.id
     paas_integration = data.azurerm_subnet.app_integration.id
   }
 }
