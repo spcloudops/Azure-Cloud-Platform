@@ -58,10 +58,3 @@ resource "azurerm_managed_disk" "workload_data" {
 
   tags = local.tags
 }
-
-resource "azurerm_virtual_machine_data_disk_attachment" "workload" {
-  managed_disk_id    = azurerm_managed_disk.workload_data.id
-  virtual_machine_id = azurerm_windows_virtual_machine.workload.id
-  lun                = 0
-  caching            = "None"
-}
