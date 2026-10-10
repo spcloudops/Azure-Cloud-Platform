@@ -14,7 +14,7 @@ resource "azurerm_network_interface" "workload" {
 
 resource "azurerm_windows_virtual_machine" "workload" {
   name                = "vm-rapid-workload-dev"
-  computer_name       = "rapid-work-dev"
+  computer_name       = "rapid-work-r2"
   location            = data.azurerm_resource_group.platform.location
   resource_group_name = data.azurerm_resource_group.platform.name
   size                = "Standard_B2s"
