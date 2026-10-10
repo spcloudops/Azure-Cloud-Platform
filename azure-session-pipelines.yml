@@ -9,6 +9,10 @@ parameters:
   - plan
   - deploy
   - destroy
+- name: enableFirewall
+  displayName: Deploy Firewall and routed egress
+  type: boolean
+  default: false
 
 pool:
   vmImage: ubuntu-latest
@@ -60,7 +64,20 @@ stages:
           export ARM_USE_AZUREAD=true
           export ARM_USE_CLI=false
           export TF_IN_AUTOMATION=true
+          case "$SESSION_FIREWALL_ENABLED" in
+                   true|True)
+                      export TF_VAR_enable_firewall=true
+                      ;;
+                   false|False)
+                      export TF_VAR_enable_firewall=false
+                      ;;
+                    *)
+                      echo "Invalid Firewall selection."
+                      exit 1
+                      ;;
+                  esac
 
+                  echo "Firewall enabled: $TF_VAR_enable_firewall"
           # Confirm that this configuration selects the session state.
           grep -Eq '^[[:space:]]*key[[:space:]]*=[[:space:]]*"rapid-session-dev.tfstate"[[:space:]]*$' \
             dev.backend.hcl
@@ -84,6 +101,7 @@ stages:
       env:
         SESSION_OPERATION: ${{ parameters.operation }}
         TF_VAR_management_admin_password: $(managementAdminPassword)
+        SESSION_FIREWALL_ENABLED: '${{ parameters.enableFirewall }}'
 
     - publish: '$(Build.ArtifactStagingDirectory)/session-plan'
       artifact: session-plan
@@ -146,7 +164,6 @@ stages:
                 export ARM_USE_AZUREAD=true
                 export ARM_USE_CLI=false
                 export TF_IN_AUTOMATION=true
-
                 grep -Eq '^[[:space:]]*key[[:space:]]*=[[:space:]]*"rapid-session-dev.tfstate"[[:space:]]*$' \
                   dev.backend.hcl
 

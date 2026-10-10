@@ -31,3 +31,10 @@ variable "management_admin_password" {
     error_message = "The management admin password must be at least 12 characters long and contain uppercase letters, lowercase letters, numbers, and special characters."
   }
 }
+
+variable "enable_firewall" {
+  description = "Deploy the session Firewall and its dependent routing."
+  type        = bool
+  default     = false
+  nullable    = false
+}

@@ -1,6 +1,7 @@
 resource "azurerm_firewall_policy_rule_collection_group" "outbound" {
+  count              = var.enable_firewall ? 1 : 0
   name               = "rcg-outbound"
-  firewall_policy_id = azurerm_firewall_policy.platform.id
+  firewall_policy_id = azurerm_firewall_policy.platform[0].id
   priority           = 200
 
   application_rule_collection {

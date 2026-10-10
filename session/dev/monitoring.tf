@@ -9,8 +9,9 @@ resource "azurerm_log_analytics_workspace" "session" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "firewall" {
+  count                          = var.enable_firewall ? 1 : 0
   name                           = "diag-rapid-firewall-dev"
-  target_resource_id             = azurerm_firewall.platform.id
+  target_resource_id             = azurerm_firewall.platform[0].id
   log_analytics_workspace_id     = azurerm_log_analytics_workspace.session.id
   log_analytics_destination_type = "Dedicated"
 
