@@ -76,6 +76,18 @@ resource "azurerm_network_security_group" "app" {
   }
 
   security_rule {
+    name                       = "Allow-HTTP-From-Hub-Management"
+    priority                   = 130
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = local.subnets["hub_management"].cidr
+    destination_address_prefix = local.subnets["app"].cidr
+  }
+
+  security_rule {
     name                       = "Deny-All-Other-Inbound"
     priority                   = 4096
     direction                  = "Inbound"

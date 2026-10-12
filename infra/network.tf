@@ -37,9 +37,9 @@ locals {
       cidr = "10.0.1.0/26"
     }
     hub_management = {
-        vnet = "hub"
-        name = "snet-hub-management"
-        cidr = "10.0.3.0/24"
+      vnet = "hub"
+      name = "snet-hub-management"
+      cidr = "10.0.3.0/24"
     }
     app_gateway = {
       vnet = "hub"
