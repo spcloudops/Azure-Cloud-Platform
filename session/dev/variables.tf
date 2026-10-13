@@ -38,3 +38,10 @@ variable "enable_firewall" {
   default     = false
   nullable    = false
 }
+
+variable "enable_iaas_app" {
+  description = "Deploy the internal Load Balancer and VMSS application tier."
+  type        = bool
+  default     = false
+  nullable    = false
+}

@@ -13,6 +13,10 @@ parameters:
   displayName: Deploy Firewall and routed egress
   type: boolean
   default: false
+- name: enableIaasApp
+  displayName: Deploy IaaS application tier - ILB and VMSS
+  type: boolean
+  default: false
 
 pool:
   vmImage: ubuntu-latest
@@ -78,6 +82,32 @@ stages:
                   esac
 
                   echo "Firewall enabled: $TF_VAR_enable_firewall"
+          case "$SESSION_IAAS_APP_ENABLED" in
+                    true|True)
+                      export TF_VAR_enable_iaas_app=true
+                      ;;
+                    false|False)
+                      export TF_VAR_enable_iaas_app=false
+                      ;;
+                    *)
+                      echo "Invalid IaaS application selection."
+                      exit 1
+                      ;;
+                  esac
+
+                  echo "IaaS application enabled: $TF_VAR_enable_iaas_app"
+
+                  if [ "$SESSION_OPERATION" != "destroy" ] &&
+                     [ "$TF_VAR_enable_iaas_app" = "true" ] &&
+                     [ "$TF_VAR_enable_firewall" != "true" ]; then
+                     echo "Enable Firewall for the current VMSS provisioning configuration."
+                     exit 1
+                  fi
+
+                  if [ "$TF_VAR_enable_iaas_app" = "true" ] &&
+                     [ "$SESSION_OPERATION" != "destroy" ]; then
+                     test -f scripts/configure-iis.ps1
+                  fi
           # Confirm that this configuration selects the session state.
           grep -Eq '^[[:space:]]*key[[:space:]]*=[[:space:]]*"rapid-session-dev.tfstate"[[:space:]]*$' \
             dev.backend.hcl
@@ -102,6 +132,7 @@ stages:
         SESSION_OPERATION: ${{ parameters.operation }}
         TF_VAR_management_admin_password: $(managementAdminPassword)
         SESSION_FIREWALL_ENABLED: '${{ parameters.enableFirewall }}'
+        SESSION_IAAS_APP_ENABLED: '${{ parameters.enableIaasApp }}'
 
     - publish: '$(Build.ArtifactStagingDirectory)/session-plan'
       artifact: session-plan

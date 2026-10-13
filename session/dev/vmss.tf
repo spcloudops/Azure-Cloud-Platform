@@ -13,6 +13,7 @@ locals {
 }
 
 resource "azurerm_windows_virtual_machine_scale_set" "application" {
+  count               = var.enable_iaas_app ? 1 : 0
   name                = "vmss-rapid-app-dev"
   location            = data.azurerm_resource_group.platform.location
   resource_group_name = data.azurerm_resource_group.platform.name
@@ -52,7 +53,7 @@ resource "azurerm_windows_virtual_machine_scale_set" "application" {
       subnet_id = data.azurerm_subnet.app.id
 
       load_balancer_backend_address_pool_ids = [
-        azurerm_lb_backend_address_pool.application.id
+        azurerm_lb_backend_address_pool.application[0].id
       ]
     }
   }
