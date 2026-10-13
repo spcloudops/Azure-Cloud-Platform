@@ -65,8 +65,10 @@ resource "azurerm_windows_virtual_machine_scale_set" "application" {
     type_handler_version       = "1.10"
     auto_upgrade_minor_version = true
 
-    force_update_tag = filesha256(
-      "${path.module}/scripts/configure-iis.ps1"
+    force_update_tag = substr(
+      filesha256("${path.module}/scripts/configure-iis.ps1"),
+      0,
+      40
     )
 
     settings = jsonencode({
