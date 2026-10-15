@@ -1,4 +1,5 @@
 resource "azurerm_network_interface" "workload" {
+  count               = var.enable_session_compute ? 1 : 0
   name                = "nic-rapid-workload-dev"
   location            = data.azurerm_resource_group.platform.location
   resource_group_name = data.azurerm_resource_group.platform.name
@@ -13,6 +14,7 @@ resource "azurerm_network_interface" "workload" {
 }
 
 resource "azurerm_windows_virtual_machine" "workload" {
+  count               = var.enable_session_compute ? 1 : 0
   name                = "vm-rapid-workload-dev"
   computer_name       = "rapid-work-r2"
   location            = data.azurerm_resource_group.platform.location
@@ -23,7 +25,7 @@ resource "azurerm_windows_virtual_machine" "workload" {
   admin_password = var.management_admin_password
 
   network_interface_ids = [
-    azurerm_network_interface.workload.id
+    azurerm_network_interface.workload[0].id
   ]
 
   os_disk {
@@ -49,6 +51,7 @@ resource "azurerm_windows_virtual_machine" "workload" {
 }
 
 resource "azurerm_managed_disk" "workload_data" {
+  count                = var.enable_session_compute ? 1 : 0
   name                 = "disk-rapid-workload-data-dev"
   location             = data.azurerm_resource_group.platform.location
   resource_group_name  = data.azurerm_resource_group.platform.name
@@ -60,8 +63,9 @@ resource "azurerm_managed_disk" "workload_data" {
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "workload" {
-  managed_disk_id    = azurerm_managed_disk.workload_data.id
-  virtual_machine_id = azurerm_windows_virtual_machine.workload.id
+  count              = var.enable_session_compute ? 1 : 0
+  managed_disk_id    = azurerm_managed_disk.workload_data[0].id
+  virtual_machine_id = azurerm_windows_virtual_machine.workload[0].id
   lun                = 0
   caching            = "None"
 }

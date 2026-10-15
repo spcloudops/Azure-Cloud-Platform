@@ -17,6 +17,14 @@ parameters:
   displayName: Deploy IaaS application tier - ILB and VMSS
   type: boolean
   default: false
+- name: enablePaasApp
+  displayName: Deploy PaaS application tier - App Service
+  type: boolean
+  default: false
+- name: enableSessionCompute
+  displayName: Deploy standalone management and workload VMs
+  type: boolean
+  default: false
 
 pool:
   vmImage: ubuntu-latest
@@ -133,6 +141,8 @@ stages:
         TF_VAR_management_admin_password: $(managementAdminPassword)
         SESSION_FIREWALL_ENABLED: '${{ parameters.enableFirewall }}'
         SESSION_IAAS_APP_ENABLED: '${{ parameters.enableIaasApp }}'
+        TF_VAR_enable_paas_app: '${{ lower(parameters.enablePaasApp) }}'
+        TF_VAR_enable_session_compute: '${{ lower(parameters.enableSessionCompute) }}'
 
     - publish: '$(Build.ArtifactStagingDirectory)/session-plan'
       artifact: session-plan

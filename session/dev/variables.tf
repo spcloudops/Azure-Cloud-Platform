@@ -45,3 +45,17 @@ variable "enable_iaas_app" {
   default     = false
   nullable    = false
 }
+
+variable "enable_paas_app" {
+  description = "Deploy the Windows App Service plan and web application."
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
+variable "enable_session_compute" {
+  description = "Deploy the standalone management and workload VMs and their associated resources."
+  type        = bool
+  default     = false
+  nullable    = false
+}
