@@ -19,10 +19,11 @@ resource "azurerm_service_plan" "paas" {
 resource "azurerm_windows_web_app" "paas" {
   count = var.enable_paas_app ? 1 : 0
 
-  name                = local.paas_web_app_name
-  location            = data.azurerm_resource_group.platform.location
-  resource_group_name = data.azurerm_resource_group.platform.name
-  service_plan_id     = azurerm_service_plan.paas[0].id
+  name                      = local.paas_web_app_name
+  location                  = data.azurerm_resource_group.platform.location
+  resource_group_name       = data.azurerm_resource_group.platform.name
+  service_plan_id           = azurerm_service_plan.paas[0].id
+  virtual_network_subnet_id = data.azurerm_subnet.app_integration.id
 
   https_only                    = true
   public_network_access_enabled = true
